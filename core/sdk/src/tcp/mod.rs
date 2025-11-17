@@ -15,10 +15,15 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
+#[cfg(feature = "tcp")]
 pub(crate) mod tcp_client;
+#[cfg(feature = "tcp")]
 pub(crate) mod tcp_connection_stream;
+#[cfg(feature = "tcp")]
 pub(crate) mod tcp_connection_stream_kind;
+#[cfg(feature = "tcp")]
 pub(crate) mod tcp_stream;
+#[cfg(feature = "tcp")]
 pub(crate) mod tcp_tls_connection_stream;
+#[cfg(feature = "tcp")]
 pub(crate) mod tcp_tls_verifier;

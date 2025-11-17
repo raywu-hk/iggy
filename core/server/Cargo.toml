@@ -32,9 +32,13 @@ name = "iggy-server"
 path = "src/main.rs"
 
 [features]
-default = ["mimalloc"]
+default = ["mimalloc", "tcp", "http", "quic", "websocket"]
 disable-mimalloc = []
 mimalloc = ["dep:mimalloc"]
+tcp = ["dep:mimalloc", "iggy_common/tcp"]
+http = ["dep:mimalloc", "iggy_common/tokio_lock", "iggy_common/http"]
+quic = ["dep:mimalloc", "iggy_common/quic"]
+websocket = ["dep:mimalloc", "iggy_common/websocket"]
 
 [dependencies]
 ahash = { workspace = true }
@@ -70,7 +74,7 @@ flume = { workspace = true }
 futures = { workspace = true }
 hash32 = "1.0.0"
 human-repr = { workspace = true }
-iggy_common = { workspace = true }
+iggy_common = { path = "../common", default-features = false }
 jsonwebtoken = { version = "10.2.0", features = ["rust_crypto"] }
 lending-iterator = "0.1.7"
 mimalloc = { workspace = true, optional = true }

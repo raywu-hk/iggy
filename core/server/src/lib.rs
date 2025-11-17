@@ -34,17 +34,21 @@ pub mod bootstrap;
 pub(crate) mod compat;
 pub mod configs;
 pub mod diagnostics;
+#[cfg(feature = "http")]
 pub mod http;
 pub mod io;
 pub mod log;
+#[cfg(feature = "quic")]
 pub mod quic;
 pub mod server_error;
 pub mod shard;
 pub mod slab;
 pub mod state;
 pub mod streaming;
+#[cfg(feature = "tcp")]
 pub mod tcp;
 pub mod versioning;
+#[cfg(feature = "websocket")]
 pub mod websocket;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

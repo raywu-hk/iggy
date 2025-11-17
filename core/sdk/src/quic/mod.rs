@@ -15,6 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
+#[cfg(feature = "quic")]
 pub mod quic_client;
+#[cfg(feature = "quic")]
 mod skip_server_verification;

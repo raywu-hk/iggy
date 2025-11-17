@@ -20,10 +20,14 @@ pub mod client_provider;
 pub mod client_wrappers;
 pub mod clients;
 pub mod consumer_ext;
+#[cfg(feature = "http")]
 pub mod http;
 mod leader_aware;
 pub mod prelude;
+#[cfg(feature = "quic")]
 pub mod quic;
 pub mod stream_builder;
+#[cfg(feature = "tcp")]
 pub mod tcp;
+#[cfg(feature = "websocket")]
 pub mod websocket;

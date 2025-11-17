@@ -29,8 +29,12 @@ repository = "https://github.com/apache/iggy"
 readme = "../../README.md"
 
 [features]
-default = ["tokio_lock"]
-tokio_lock = []
+default = ["tokio_lock", "tcp", "http", "quic", "websocket"]
+tokio_lock = ["iggy_common/tokio_lock"]
+tcp = ["iggy_common/tcp"]
+http = ["iggy_common/http"]
+quic = ["iggy_common/quic"]
+websocket = ["iggy_common/websocket"]
 # Moved to common crate. Not sure if this is even needed anymore
 #fast_async_lock = ["dep:fast-async-mutex"]
 
@@ -47,7 +51,7 @@ flume = { workspace = true }
 futures = { workspace = true }
 futures-util = { workspace = true }
 iggy_binary_protocol = { workspace = true }
-iggy_common = { workspace = true }
+iggy_common = { path = "../common", default-features = false }
 num_cpus = "1.17.0"
 quinn = { workspace = true }
 reqwest = { workspace = true }

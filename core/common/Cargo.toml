@@ -28,9 +28,13 @@ repository = "https://github.com/apache/iggy"
 readme = "../../README.md"
 
 [features]
-default = ["tokio_lock"]
+default = ["tokio_lock", "tcp", "http", "quic", "websocket"]
 tokio_lock = []
 fast_async_lock = ["dep:fast-async-mutex"]
+tcp = []
+http = []
+quic = []
+websocket = []
 
 [dependencies]
 aes-gcm = { workspace = true }

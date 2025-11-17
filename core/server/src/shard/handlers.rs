@@ -405,18 +405,22 @@ pub(crate) async fn handle_event(shard: &IggyShard, event: ShardEvent) -> Result
                 protocol, address
             );
             match protocol {
+                #[cfg(feature = "tcp")]
                 TransportProtocol::Tcp => {
                     shard.tcp_bound_address.set(Some(address));
                     let _ = shard.config_writer_notify.try_send(());
                 }
+                #[cfg(feature = "quic")]
                 TransportProtocol::Quic => {
                     shard.quic_bound_address.set(Some(address));
                     let _ = shard.config_writer_notify.try_send(());
                 }
+                #[cfg(feature = "http")]
                 TransportProtocol::Http => {
                     shard.http_bound_address.set(Some(address));
                     let _ = shard.config_writer_notify.try_send(());
                 }
+                #[cfg(feature = "websocket")]
                 TransportProtocol::WebSocket => {
                     shard.websocket_bound_address.set(Some(address));
                     let _ = shard.config_writer_notify.try_send(());

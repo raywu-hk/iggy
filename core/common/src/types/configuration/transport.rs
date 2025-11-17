@@ -22,18 +22,39 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::{fmt, str::FromStr};
 use strum::{Display, EnumString, IntoStaticStr};
 
-#[derive(Clone, Copy, Debug, Default, Display, PartialEq, EnumString, IntoStaticStr, Eq)]
+#[derive(Clone, Copy, Debug, Display, PartialEq, EnumString, IntoStaticStr, Eq)]
 #[repr(u8)]
 pub enum TransportProtocol {
-    #[default]
+    #[cfg(feature = "tcp")]
     #[strum(to_string = "tcp")]
     Tcp = 1,
+    #[cfg(feature = "quic")]
     #[strum(to_string = "quic")]
     Quic = 2,
+    #[cfg(feature = "http")]
     #[strum(to_string = "http")]
     Http = 3,
+    #[cfg(feature = "websocket")]
     #[strum(to_string = "ws")]
     WebSocket = 4,
+}
+
+impl Default for TransportProtocol {
+    fn default() -> Self {
+        #[cfg(feature = "tcp")]
+        return TransportProtocol::Tcp;
+        #[cfg(all(feature = "quic", not(feature = "tcp")))]
+        return TransportProtocol::Quic;
+        #[cfg(all(feature = "http", not(feature = "tcp"), not(feature = "quic")))]
+        return TransportProtocol::Http;
+        #[cfg(all(
+            feature = "websocket",
+            not(feature = "tcp"),
+            not(feature = "quic"),
+            not(feature = "http")
+        ))]
+        return TransportProtocol::WebSocket;
+    }
 }
 
 impl TransportProtocol {
@@ -47,9 +68,13 @@ impl TryFrom<u8> for TransportProtocol {
 
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
+            #[cfg(feature = "tcp")]
             v if v == TransportProtocol::Tcp as u8 => Ok(TransportProtocol::Tcp),
+            #[cfg(feature = "quic")]
             v if v == TransportProtocol::Quic as u8 => Ok(TransportProtocol::Quic),
+            #[cfg(feature = "http")]
             v if v == TransportProtocol::Http as u8 => Ok(TransportProtocol::Http),
+            #[cfg(feature = "websocket")]
             v if v == TransportProtocol::WebSocket as u8 => Ok(TransportProtocol::WebSocket),
             _ => Err(IggyError::InvalidCommand),
         }
@@ -100,9 +125,13 @@ impl<'de> Deserialize<'de> for TransportProtocol {
                 E: serde::de::Error,
             {
                 match value {
+                    #[cfg(feature = "tcp")]
                     v if v == TransportProtocol::Tcp as u8 => Ok(TransportProtocol::Tcp),
+                    #[cfg(feature = "quic")]
                     v if v == TransportProtocol::Quic as u8 => Ok(TransportProtocol::Quic),
+                    #[cfg(feature = "http")]
                     v if v == TransportProtocol::Http as u8 => Ok(TransportProtocol::Http),
+                    #[cfg(feature = "websocket")]
                     v if v == TransportProtocol::WebSocket as u8 => {
                         Ok(TransportProtocol::WebSocket)
                     }

@@ -19,6 +19,7 @@
 use crate::{AutoLogin, ConnectionStringOptions, Credentials, IggyError, TransportProtocol};
 use std::str::FromStr;
 
+#[cfg(feature = "tcp")]
 const DEFAULT_CONNECTION_STRING_PREFIX: &str = "iggy://";
 const CONNECTION_STRING_PREFIX: &str = "iggy+";
 
@@ -137,7 +138,7 @@ impl ConnectionStringUtils {
         if connection_string.is_empty() {
             return Err(IggyError::InvalidConnectionString);
         }
-
+        #[cfg(feature = "tcp")]
         if connection_string.starts_with(DEFAULT_CONNECTION_STRING_PREFIX) {
             return Ok(TransportProtocol::Tcp);
         }

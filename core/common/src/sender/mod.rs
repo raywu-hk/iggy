@@ -15,28 +15,43 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
+#[cfg(feature = "quic")]
 mod quic_sender;
+#[cfg(feature = "tcp")]
 mod tcp_sender;
+#[cfg(feature = "tcp")]
 mod tcp_tls_sender;
+#[cfg(feature = "websocket")]
 mod websocket_sender;
+#[cfg(feature = "websocket")]
 mod websocket_tls_sender;
-
+#[cfg(feature = "quic")]
 pub use quic_sender::QuicSender;
+#[cfg(feature = "tcp")]
 pub use tcp_sender::TcpSender;
+#[cfg(feature = "tcp")]
 pub use tcp_tls_sender::TcpTlsSender;
+#[cfg(feature = "websocket")]
 pub use websocket_sender::WebSocketSender;
+#[cfg(feature = "websocket")]
 pub use websocket_tls_sender::WebSocketTlsSender;
 
 use crate::IggyError;
 use crate::alloc::buffer::PooledBuffer;
-use compio::BufResult;
+#[cfg(any(feature = "tcp", feature = "http"))]
+use compio::{
+    BufResult,
+    io::{AsyncReadExt, AsyncWriteExt},
+};
 use compio::buf::IoBufMut;
-use compio::io::{AsyncReadExt, AsyncWriteExt};
+#[cfg(feature = "tcp")]
 use compio::net::TcpStream;
+#[cfg(feature = "quic")]
 use compio_quic::{RecvStream, SendStream};
+#[cfg(feature = "tcp")]
 use compio_tls::TlsStream;
 use std::future::Future;
+#[cfg(any(feature = "tcp", feature = "http"))]
 use tracing::debug;
 
 macro_rules! forward_async_methods {
@@ -54,10 +69,15 @@ macro_rules! forward_async_methods {
             $(<$($generic $(: $bound)?),+>)?
             (&mut self, $( $arg: $arg_ty ),* ) -> $ret {
                 match self {
+                    #[cfg(feature = "tcp")]
                     Self::Tcp(d) => d.$method_name$(::<$($generic),+>)?($( $arg ),*).await,
+                    #[cfg(feature = "tcp")]
                     Self::TcpTls(s) => s.$method_name$(::<$($generic),+>)?($( $arg ),*).await,
+                    #[cfg(feature = "quic")]
                     Self::Quic(s) => s.$method_name$(::<$($generic),+>)?($( $arg ),*).await,
+                    #[cfg(feature = "websocket")]
                     Self::WebSocket(s) => s.$method_name$(::<$($generic),+>)?($( $arg ),*).await,
+                    #[cfg(feature = "websocket")]
                     Self::WebSocketTls(s) => s.$method_name$(::<$($generic),+>)?($( $arg ),*).await,
                 }
             }
@@ -83,33 +103,40 @@ pub trait Sender {
 
 #[allow(clippy::large_enum_variant)]
 pub enum SenderKind {
+    #[cfg(feature = "tcp")]
     Tcp(TcpSender),
+    #[cfg(feature = "tcp")]
     TcpTls(TcpTlsSender),
+    #[cfg(feature = "quic")]
     Quic(QuicSender),
+    #[cfg(feature = "websocket")]
     WebSocket(WebSocketSender),
+    #[cfg(feature = "websocket")]
     WebSocketTls(WebSocketTlsSender),
 }
 
 impl SenderKind {
+    #[cfg(feature = "tcp")]
     pub fn get_tcp_sender(stream: TcpStream) -> Self {
         Self::Tcp(TcpSender { stream })
     }
 
+    #[cfg(feature = "tcp")]
     pub fn get_tcp_tls_sender(stream: TlsStream<TcpStream>) -> Self {
         Self::TcpTls(TcpTlsSender { stream })
     }
-
+    #[cfg(feature = "quic")]
     pub fn get_quic_sender(send_stream: SendStream, recv_stream: RecvStream) -> Self {
         Self::Quic(QuicSender {
             send: send_stream,
             recv: recv_stream,
         })
     }
-
+    #[cfg(feature = "websocket")]
     pub fn get_websocket_sender(stream: WebSocketSender) -> Self {
         Self::WebSocket(stream)
     }
-
+    #[cfg(feature = "websocket")]
     pub fn get_websocket_tls_sender(stream: WebSocketTlsSender) -> Self {
         Self::WebSocketTls(stream)
     }
@@ -123,9 +150,9 @@ impl SenderKind {
         async fn shutdown(&mut self) -> Result<(), IggyError>;
     }
 }
-
+#[cfg(any(feature = "tcp",feature = "http"))]
 const STATUS_OK: &[u8] = &[0; 4];
-
+#[cfg(any(feature = "tcp",feature = "http"))]
 pub(crate) async fn read<T, B>(stream: &mut T, buffer: B) -> (Result<(), IggyError>, B)
 where
     T: AsyncReadExt + AsyncWriteExt + Unpin,
@@ -143,7 +170,7 @@ where
         }
     }
 }
-
+#[cfg(any(feature = "tcp",feature = "http"))]
 pub(crate) async fn send_empty_ok_response<T>(stream: &mut T) -> Result<(), IggyError>
 where
     T: AsyncReadExt + AsyncWriteExt + Unpin,
@@ -151,13 +178,14 @@ where
     send_ok_response(stream, &[]).await
 }
 
+#[cfg(any(feature = "tcp",feature = "http"))]
 pub(crate) async fn send_ok_response<T>(stream: &mut T, payload: &[u8]) -> Result<(), IggyError>
 where
     T: AsyncReadExt + AsyncWriteExt + Unpin,
 {
     send_response(stream, STATUS_OK, payload).await
 }
-
+#[cfg(any(feature = "tcp",feature = "http"))]
 pub(crate) async fn send_ok_response_vectored<T>(
     stream: &mut T,
     length: &[u8],
@@ -168,7 +196,7 @@ where
 {
     send_response_vectored(stream, STATUS_OK, length, slices).await
 }
-
+#[cfg(any(feature = "tcp",feature = "http"))]
 pub(crate) async fn send_error_response<T>(
     stream: &mut T,
     error: IggyError,
@@ -179,6 +207,7 @@ where
     send_response(stream, &error.as_code().to_le_bytes(), &[]).await
 }
 
+#[cfg(any(feature = "tcp",feature = "http"))]
 pub(crate) async fn send_response<T>(
     stream: &mut T,
     status: &[u8],
@@ -201,7 +230,7 @@ where
     debug!("Sent response with status: {:?}", status);
     Ok(())
 }
-
+#[cfg(any(feature = "tcp",feature = "http"))]
 pub(crate) async fn send_response_vectored<T>(
     stream: &mut T,
     status: &[u8],

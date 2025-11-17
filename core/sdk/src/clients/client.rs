@@ -19,13 +19,17 @@
 use crate::client_wrappers::client_wrapper::ClientWrapper;
 use crate::client_wrappers::connection_info::ConnectionInfo;
 use crate::clients::client_builder::IggyClientBuilder;
+#[cfg(feature = "http")]
 use crate::http::http_client::HttpClient;
 use crate::prelude::EncryptorKind;
 use crate::prelude::IggyConsumerBuilder;
 use crate::prelude::IggyError;
 use crate::prelude::IggyProducerBuilder;
+#[cfg(feature = "quic")]
 use crate::quic::quic_client::QuicClient;
+#[cfg(feature = "tcp")]
 use crate::tcp::tcp_client::TcpClient;
+#[cfg(feature = "websocket")]
 use crate::websocket::websocket_client::WebSocketClient;
 use async_broadcast::Receiver;
 use async_trait::async_trait;
@@ -83,15 +87,19 @@ impl IggyClient {
     /// Creates a new `IggyClient` from the provided connection string.
     pub fn from_connection_string(connection_string: &str) -> Result<Self, IggyError> {
         match ConnectionStringUtils::parse_protocol(connection_string)? {
+            #[cfg(feature = "tcp")]
             TransportProtocol::Tcp => Ok(IggyClient::new(ClientWrapper::Tcp(
                 TcpClient::from_connection_string(connection_string)?,
             ))),
+            #[cfg(feature = "quic")]
             TransportProtocol::Quic => Ok(IggyClient::new(ClientWrapper::Quic(
                 QuicClient::from_connection_string(connection_string)?,
             ))),
+            #[cfg(feature = "http")]
             TransportProtocol::Http => Ok(IggyClient::new(ClientWrapper::Http(
                 HttpClient::from_connection_string(connection_string)?,
             ))),
+            #[cfg(feature = "websocket")]
             TransportProtocol::WebSocket => Ok(IggyClient::new(ClientWrapper::WebSocket(
                 WebSocketClient::from_connection_string(connection_string)?,
             ))),

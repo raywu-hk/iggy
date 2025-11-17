@@ -30,17 +30,16 @@ mod handlers;
 pub use communication::calculate_shard_assignment;
 
 use self::tasks::{continuous, periodic};
+#[cfg(any(feature = "http", feature = "websocket"))]
+use crate::shard::transmission::event::ShardEvent;
 use crate::{
     configs::server::ServerConfig,
     io::fs_locks::FsLocks,
     shard::{
         namespace::IggyNamespace,
         task_registry::TaskRegistry,
-        transmission::{
-            event::ShardEvent,
-            frame::{ShardFrame, ShardResponse},
-            message::ShardMessage,
-        },
+        transmission::frame::{ShardFrame, ShardResponse},
+        transmission::message::ShardMessage,
     },
     slab::{streams::Streams, traits_ext::EntityMarker, users::Users},
     state::file::FileState,
@@ -122,11 +121,12 @@ impl IggyShard {
         {
             tasks::oneshot::spawn_config_writer_task(self);
         }
-
+        #[cfg(feature = "tcp")]
         if self.config.tcp.enabled {
             continuous::spawn_tcp_server(self.clone());
         }
 
+        #[cfg(feature = "http")]
         if self.config.http.enabled && self.id == 0 {
             continuous::spawn_http_server(self.clone());
         }
@@ -136,9 +136,12 @@ impl IggyShard {
         // TODO(hubcio): QUIC doesn't properly work on all shards, especially tests `concurrent` and `system_scenario`.
         // it's probably related to Endpoint not Cloned between shards, but all shards are creating its own instance.
         // This way packet CID is invalid. (crypto-related stuff)
+        #[cfg(feature = "quic")]
         if self.config.quic.enabled && self.id == 0 {
             continuous::spawn_quic_server(self.clone());
         }
+
+        #[cfg(feature = "websocket")]
         if self.config.websocket.enabled {
             continuous::spawn_websocket_server(self.clone());
         }
@@ -299,6 +302,7 @@ impl IggyShard {
         handlers::handle_shard_message(self, message).await
     }
 
+    #[cfg(any(feature = "http", feature = "websocket"))]
     pub(crate) async fn handle_event(&self, event: ShardEvent) -> Result<(), IggyError> {
         handlers::handle_event(self, event).await
     }

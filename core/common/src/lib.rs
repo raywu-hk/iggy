@@ -44,9 +44,18 @@ pub use commands::system::*;
 pub use commands::topics::*;
 pub use commands::users::*;
 pub use configs::*;
-pub use sender::{
-    QuicSender, Sender, SenderKind, TcpSender, TcpTlsSender, WebSocketSender, WebSocketTlsSender,
-};
+#[cfg(feature = "quic")]
+pub use sender::QuicSender;
+pub use sender::Sender;
+pub use sender::SenderKind;
+#[cfg(feature = "tcp")]
+pub use sender::TcpSender;
+#[cfg(feature = "tcp")]
+pub use sender::TcpTlsSender;
+#[cfg(feature = "websocket")]
+pub use sender::WebSocketSender;
+#[cfg(feature = "websocket")]
+pub use sender::WebSocketTlsSender;
 pub use traits::bytes_serializable::BytesSerializable;
 pub use traits::partitioner::Partitioner;
 pub use traits::sizeable::Sizeable;

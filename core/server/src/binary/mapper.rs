@@ -30,7 +30,7 @@ use crate::streaming::topics::topic::{self, TopicRoot};
 use crate::streaming::users::user::User;
 use arcshift::SharedGetGuard;
 use bytes::{BufMut, Bytes, BytesMut};
-use iggy_common::{BytesSerializable, ConsumerOffsetInfo, Stats, TransportProtocol, UserId};
+use iggy_common::{BytesSerializable, ConsumerOffsetInfo, Stats, UserId};
 use slab::Slab;
 
 pub fn map_stats(stats: &Stats) -> Bytes {
@@ -294,12 +294,7 @@ fn extend_consumer_group(
 fn extend_client(client: &Client, bytes: &mut BytesMut) {
     bytes.put_u32_le(client.session.client_id);
     bytes.put_u32_le(client.user_id.unwrap_or(u32::MAX));
-    let transport: u8 = match client.transport {
-        TransportProtocol::Tcp => 1,
-        TransportProtocol::Quic => 2,
-        TransportProtocol::Http => 3,
-        TransportProtocol::WebSocket => 4,
-    };
+    let transport: u8 = client.transport as u8;
     bytes.put_u8(transport);
     let address = client.session.ip_address.to_string();
     bytes.put_u32_le(address.len() as u32);
